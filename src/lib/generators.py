@@ -9,7 +9,7 @@ STEP = 1
 SEED = 39
 
 METER_MIN_CONSUMPTION = 0.0
-METER_MAX_CONSUMPTION = 3000.0
+METER_MAX_CONSUMPTION = 9000.0
 
 PV_DAWN = 5.5
 PV_DUSK = 21.0
@@ -21,16 +21,16 @@ PV_VOLTS_NO_SUN = 0.0
 PV_VOLTS_FULL_RISE = 300.0
 PV_VOLTS_BEGIN_FALL = 200.0
 PV_VOLTS_MAX = 3300.0
+
 ################################################
 # PV equations
-
 # Dawn curve calculation
-PV_DAWN = np.polyfit(
+PV_DAWN_CONST = np.polyfit(
         x=[PV_DAWN, PV_DAWN+PV_DAWN_TIME],
         y=[PV_VOLTS_NO_SUN, PV_VOLTS_FULL_RISE],
         deg=1)
 # Dusk Curve calculator
-PV_DUSK = np.polyfit(
+PV_DUSK_CONST = np.polyfit(
         x=[PV_DUSK - PV_DUSK_TIME, PV_DUSK],
         y=[PV_VOLTS_BEGIN_FALL, PV_VOLTS_NO_SUN],
         deg=1)
@@ -52,6 +52,8 @@ class Meter:
 
     def get_consumption(self, time):
         noise = STEP*self.random_seed.randrange(-1, 2)
+        # Using PerlinNoise in order to create a smooth Curve
+        # PerlinNoise is generated between -1 and 1, so we escale it to be between our values
         next = (self.p_noise(time) + 1) * ((METER_MAX_CONSUMPTION - METER_MIN_CONSUMPTION)/2) + noise
         if next <= 0.0:
             return 0.0
@@ -66,11 +68,11 @@ class Photovoltaic:
     def __init__(self, seed=SEED):
         self.random_seed = random.Random(seed)
 
-    # time in hours
     def get_power(self, time):
-        # before dawn and after dusk we have no light
+        # This function should be cyclic with a 24 hour period
         t = time % 24.0
 
+        # before dawn and after dusk we have no light
         if t <= PV_DAWN or t >= PV_DUSK:
             return PV_VOLTS_NO_SUN
 
@@ -78,12 +80,12 @@ class Photovoltaic:
         # after dawn for DAWN_TIME hours after dawn we see a linear component
         if t <= (PV_DAWN + PV_DAWN_TIME):
             #  Y = mX + a
-            tmp = PV_DAWN[0] * t + PV_DAWN[1] + noise
+            tmp = PV_DAWN_CONST[0] * t + PV_DAWN_CONST[1] + noise
             return tmp if tmp > 0 else 0.0
 
         # # before dusk, for DUSK_TIMEhours we see a linear component
         if t >= (PV_DUSK - PV_DUSK_TIME):
-            tmp = PV_DUSK[0] * t + PV_DUSK[1] + noise
+            tmp = PV_DUSK_CONST[0] * t + PV_DUSK_CONST[1] + noise
             return tmp if tmp > 0 else 0.0
 
         # in between we see a cuadratic component
@@ -92,17 +94,17 @@ class Photovoltaic:
 
 def test():
     from matplotlib import pyplot
-    seed = 777
+    seed = 39
     meter = Meter(seed=seed, octaves=0.1)
     pv = Photovoltaic(seed=seed)
 
-    hours = 100
+    hours = 24
     tm = np.linspace(0.0, hours - 1/(60*60), num=hours*60*60 - 1)
 
     c = np.array([meter.get_consumption(t) for t in tm])
     p = np.array([pv.get_power(t) for t in tm])
 
-    pyplot.figure(figsize=(20, 10))
+    pyplot.figure(figsize=(15, 10))
     pyplot.grid(color='k', linestyle='-', linewidth=1, alpha=0.3)
     pyplot.plot(tm, c, color='r', alpha=0.5, label="Consumption")
     pyplot.plot(tm, p, color='g', alpha=1, label="Generation")
@@ -110,9 +112,6 @@ def test():
     pyplot.xlabel("Hour [HH]")
     pyplot.ylabel("Power [W]")
     pyplot.legend(loc='upper right')
-
-
-
 
 
 if __name__ == '__main__':
