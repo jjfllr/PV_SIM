@@ -2,11 +2,13 @@ import pika
 import json
 import numpy as np
 from src.lib.generators import Meter, Photovoltaic
+from src.lib.metermessage import MeterMessage
 
 import threading
 import time
 
 mutex = threading.Lock()
+
 
 class BrokerConfigs(object):
     def __init__(self, queue='default', host='localhost', routing_key='default', exchange='', credentials=pika.PlainCredentials('guest', 'guest')):
@@ -40,8 +42,9 @@ class ThreadHousehold(object):
         print('H Started')
         while not self.stop_event.is_set():
             with mutex:
-                print("thread_household: ",  self.meter.get_consumption(15))
-                self._publish(message=">>Hello from Household<<" )
+                t = 23.00
+                m = MeterMessage(origin=self.config.queue, time=t, consumption=self.meter.get_consumption(t))
+                self._publish(message=str(m.to_json()))
             time.sleep(1)
         print('H Finished')
         self.connection.close()
@@ -77,62 +80,8 @@ class ThreadPvGenerator(object):
 
     def _on_request(self, ch, method, properties, body):
         # self.queue[properties.correlation_id] = body
-        print(body)
-
-
-class MeterMessage():
-    type = 'MeterMessage'
-    origin: str
-    time: np.float64
-    consumption: np.float64
-
-    def __repr__(self):
-        return "{}: {}".format(self.type, self.__dict__)
-
-    def __init__(self, origin: str='default', time: np.float64=0.0, consumption:np.float64=0.0):
-        self.origin = origin
-        self.time = time
-        self.consumption = consumption
-
-    def to_json(self):
-        d = {'Type': 'MeterMessage'}
-        d.update(self.__dict__)
-        return json.dumps(d)
-
-    @classmethod
-    def from_json(cls, data):
-        y = json.loads(data)
-
-        if 'Type' not in y:
-            raise TypeError('Not a Valid MeterMessage')
-        if y['Type'] != 'MeterMessage':
-            raise TypeError('Not a Valid MeterMessage')
-        if 'origin' not in y:
-            raise LookupError('origin not found in JSON')
-        if 'time' not in y:
-            raise LookupError('time not found in JSON')
-        if 'consumption' not in y:
-            raise LookupError('consumption not found in JSON')
-
-        return MeterMessage(origin=y['origin'], time=y['time'], consumption=y['consumption'])
-
-
-def test_message():
-    m = MeterMessage(origin="House", time=24, consumption=9001)
-    print(m)
-
-    j = m.to_json()
-    print('json :', j)
-    y = json.loads(j)
-    print('dict :', y)
-    n = MeterMessage.from_json(j)
-    print('Obj  :', n)
-
-
-    # x = json.dumps({'Type': 'MeterMssage', 'Origin': '1', 'Time': '2', 'Watt': '3'})
-    # x = MeterMessage.from_json(x)
-    #
-    # print(x)
+        m = MeterMessage.from_json(body)
+        print('Received: ', m)
 
 
 def main():
