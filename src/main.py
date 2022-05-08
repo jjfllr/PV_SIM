@@ -1,8 +1,7 @@
 import pika
-import json
-import numpy as np
 from src.lib.generators import Meter, Photovoltaic
 from src.lib.metermessage import MeterMessage
+import src.lib.configurations as configs
 
 import threading
 import time
@@ -87,20 +86,16 @@ class ThreadPvGenerator(object):
 def main():
 
     print("Main thread created")
-    seed=39
-    meter = Meter(seed=seed, octaves=0.5)
-    photovoltaic = Photovoltaic(seed=seed)
+    meter = Meter(seed=configs.SEED, octaves=0.5)
+    photovoltaic = Photovoltaic(seed=configs.SEED)
     household_event = threading.Event()
     photovoltaic_event = threading.Event()
-
-    broker_config = BrokerConfigs(queue='household_1', host='localhost', routing_key='household_1', exchange='')
+    broker_config = BrokerConfigs(queue=configs.QUEUE, host=configs.HOST,\
+                routing_key=configs.ROUTING_KEY, exchange=configs.EXCHANGE,\
+                credentials=pika.PlainCredentials(configs.PLAINTEXT_USER, configs.PLAINTEXT_PASS))
 
     ThreadHousehold(stop_event=household_event, meter=meter, brokerconfigs=broker_config)
     ThreadPvGenerator(stop_event=photovoltaic_event, photovoltaic=photovoltaic, brokerconfigs=broker_config)
-
-    # create 2 threads
-    # Household -> Meter, send regular messages
-    # PV -> Photovoltaic, receives regular messagesn
 
     while True:
         cont = input("Continue (y)/(n)")

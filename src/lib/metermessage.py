@@ -2,7 +2,6 @@ import numpy as np
 import json
 
 class MeterMessage():
-    type = 'MeterMessage'
     origin: str
     time: np.float64
     consumption: np.float64
@@ -19,6 +18,11 @@ class MeterMessage():
         d = {'Type': 'MeterMessage'}
         d.update(self.__dict__)
         return json.dumps(d)
+
+    def __eq__(self, other):
+        if isinstance(other, MeterMessage):
+            return self.origin == other.origin and np.isclose(self.time, other.time) and np.isclose(self.consumption, other.consumption)
+        return False
 
     @classmethod
     def from_json(cls, data):
@@ -51,4 +55,4 @@ def test_message():
 
 
 if __name__ == '__main__':
-    test_message()
+    exit(0)
