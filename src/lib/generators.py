@@ -5,7 +5,7 @@ import src.lib.configurations as configs
 
 
 class Meter:
-    p_noise = PerlinNoise(octaves=0.5, seed=configs.SEED)
+    p_noise = PerlinNoise(octaves=0.0001, seed=configs.SEED)
     random_seed = random.Random(configs.SEED)
 
     def __init__(self, seed=configs.SEED, octaves=0.5):
@@ -32,7 +32,7 @@ class Photovoltaic:
 
     def get_power(self, time):
         # This function should be cyclic with a 24 hour period
-        t = time % 24.0
+        t = time % (24.0*60.0*60.0)
 
         # before dawn and after dusk we have no light
         if t <= configs.PV_DAWN or t >= configs.PV_DUSK:

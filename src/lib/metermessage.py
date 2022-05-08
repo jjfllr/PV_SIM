@@ -42,17 +42,5 @@ class MeterMessage():
         return MeterMessage(origin=y['origin'], time=y['time'], consumption=y['consumption'])
 
 
-def test_message():
-    m = MeterMessage(origin="House", time=24, consumption=9001)
-    print(m)
-
-    j = m.to_json()
-    print('json :', j)
-    y = json.loads(j)
-    print('dict :', y)
-    n = MeterMessage.from_json(j)
-    print('Obj  :', n)
-
-
 if __name__ == '__main__':
     exit(0)
