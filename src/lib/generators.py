@@ -8,7 +8,8 @@ class Meter:
     p_noise = PerlinNoise(octaves=0.0001, seed=configs.SEED)
     random_seed = random.Random(configs.SEED)
 
-    def __init__(self, seed=configs.SEED, octaves=0.5):
+    def __init__(self, id='', seed=configs.SEED, octaves=0.5):
+        self.id = str(id)
         self.p_noise = PerlinNoise(octaves=octaves, seed=seed)
         self.random_seed = random.Random(seed)
 
@@ -27,7 +28,8 @@ class Meter:
 class Photovoltaic:
     random_seed = random.Random(configs.SEED)
 
-    def __init__(self, seed=configs.SEED):
+    def __init__(self, id='', seed=configs.SEED):
+        self.id = str(id)
         self.random_seed = random.Random(seed)
 
     def get_power(self, time):

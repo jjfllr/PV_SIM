@@ -1,7 +1,6 @@
 import pika
 from src.lib.generators import Meter, Photovoltaic
 from src.lib.metermessage import MeterMessage
-import src.lib.configurations as configs
 
 import threading
 import time
@@ -41,7 +40,7 @@ class ThreadHousehold(object):
         while not self.stop_event.is_set():
             with mutex:
                 t = 23.00
-                m = MeterMessage(origin=self.config.queue, time=t, consumption=self.meter.get_consumption(t))
+                m = MeterMessage(origin=self.meter.id, time=t, consumption=self.meter.get_consumption(t))
                 self._publish(message=str(m.to_json()))
             time.sleep(1)
         print('H Finished')
@@ -49,9 +48,13 @@ class ThreadHousehold(object):
 
 
 class ThreadPvGenerator(object):
-    # queue = {}
 
-    def __init__(self, stop_event, photovoltaic=Photovoltaic(), brokerconfigs=BrokerConfigs()):
+    def __init__(self, stop_event, photovoltaic=Photovoltaic(), brokerconfigs=BrokerConfigs(), logfile=None):
+        if logfile is not None:
+            self.logfile = open(logfile, 'w')
+        else:
+            self.logfile = None
+
         self.photovoltaic = photovoltaic
         self.stop_event = stop_event
 
@@ -79,7 +82,23 @@ class ThreadPvGenerator(object):
     def _on_request(self, ch, method, properties, body):
         # self.queue[properties.correlation_id] = body
         m = MeterMessage.from_json(body)
-        print('Received: ', m)
+        self.logger(message=m)
+
+    def logger(self, message: MeterMessage = ''):
+        generation = self.photovoltaic.get_power(message.time)
+        str = "{:10} - Meter {:10} consumed {:10} [W] | PV {:10} generated {:10} [W] | Consumption Netto: {}\n"\
+            .format(message.time, message.origin, message.consumption, self.photovoltaic.id,\
+            generation, generation - message.consumption)
+        if self.logfile is not None:
+            self.logfile.write(str)
+            return
+        print(str)
+
+    def __del__(self):
+        self.stop_event.set()
+        print("closing thread")
+        if self.logfile is not None:
+            self.logfile.close()
 
 
 if __name__ == '__main__':

@@ -7,7 +7,7 @@ class MeterMessage():
     consumption: np.float64
 
     def __repr__(self):
-        return "{}: {}".format(self.type, self.__dict__)
+        return "{}: {}".format('MeterMessage', self.__dict__)
 
     def __init__(self, origin: str='default', time: np.float64=0.0, consumption:np.float64=0.0):
         self.origin = origin
