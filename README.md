@@ -15,7 +15,7 @@ a final one simulating the generator. This in order to parallel the household an
 as different entities.
 
 Time can be both simulated or be taken from the real world. A simulated day (86400 seconds)
-should take 1:15 Hours.
+should take 10 minutes.
 
 configurations.py holds the configuration parameters of the models, as well as the data
 required to make the connection to the RabbitMQ server, ideally running in localhost.
