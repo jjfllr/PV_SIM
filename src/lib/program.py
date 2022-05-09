@@ -15,6 +15,7 @@ class Program():
     init_time = None
     house_name = None
     pv_name = None
+    log_file = None
 
     def __init__(self):
         while True:
@@ -47,6 +48,10 @@ class Program():
                 tmp = input("Select photovoltaic generator Name (default: PV)")
                 self.pv_name = "PV" if tmp == '' else tmp
 
+            if self.log_file is None:
+                tmp = input("Select photovoltaic generator Name (default: logfile.log)")
+                self.log_file = None if tmp == '' else tmp
+
             if self.mode is not None and self.duration is not None\
                     and self.init_time is not None and self.house_name is not None\
                     and self.pv_name is not None:
@@ -73,7 +78,7 @@ class Program():
 
         workers.ThreadHousehold(start_event=start_event, stop_event=household_event,\
                             meter=meter, brokerconfigs=broker_config, timer=timer)
-        workers.ThreadPvGenerator(start_event=start_event, stop_event=photovoltaic_event, photovoltaic=photovoltaic, brokerconfigs=broker_config, logfile='./logfile.log')
+        workers.ThreadPvGenerator(start_event=start_event, stop_event=photovoltaic_event, photovoltaic=photovoltaic, brokerconfigs=broker_config, logfile=self.log_file)
 
         # little pause to let the threads prepare
         time.sleep(0.5)
@@ -82,7 +87,7 @@ class Program():
         if self.mode == 'S':
             print("Simulation Started\n")
             while not timer.end():
-                time.sleep(0.1)
+                time.sleep(1)
                 continue
         else:
             print("Starting to record Data")
