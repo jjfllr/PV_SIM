@@ -14,7 +14,7 @@ class Meter:
         self.random_seed = random.Random(seed)
 
     def get_consumption(self, time):
-        noise = configs.STEP*self.random_seed.randrange(-1, 2)
+        noise = configs.NOISE_AMPLITUDE*self.random_seed.randrange(-1, 2)
         # Using PerlinNoise in order to create a smooth Curve
         # PerlinNoise is generated between -1 and 1, so we escale it to be between our values
         next = (self.p_noise(time) + 1) * ((configs.METER_MAX_CONSUMPTION - configs.METER_MIN_CONSUMPTION)/2) + noise
@@ -40,7 +40,7 @@ class Photovoltaic:
         if t <= configs.PV_DAWN or t >= configs.PV_DUSK:
             return configs.PV_VOLTS_NO_SUN
 
-        noise = configs.STEP*self.random_seed.randrange(-1, 2)
+        noise = configs.NOISE_AMPLITUDE*self.random_seed.randrange(-1, 2)
         # after dawn for DAWN_TIME hours after dawn we see a linear component
         if t <= (configs.PV_DAWN + configs.PV_DAWN_TIME):
             #  Y = mX + a

@@ -2,7 +2,7 @@ import numpy as np
 
 ################################################
 # Parameters
-STEP = 1
+NOISE_AMPLITUDE = 1
 SEED = 39
 
 # values in Watt
