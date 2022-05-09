@@ -31,6 +31,7 @@ def test_graph_generator():
 class TestMeter(unittest.TestCase):
 
     def test_message_encoding(self):
+
         o = 'house'
         t = 23.5 * 60 * 60
         c = 8769.12

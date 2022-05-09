@@ -1,4 +1,5 @@
 import pika
+import numpy as np
 from src.lib.generators import Meter, Photovoltaic
 from src.lib.metermessage import MeterMessage
 
@@ -7,6 +8,25 @@ import time
 
 mutex = threading.Lock()
 
+class ThreadTimer(object):
+    def __init__(self, init_time=0, duration=3600):
+        self.mutex = threading.Lock()
+        self.duration = duration
+        self.init_time = init_time
+        self.time = init_time
+
+    def end(self):
+        with self.mutex:
+            return self.duration + self.init_time <= self.time
+
+    def increment_time(self, interval=1):
+        with self.mutex:
+            self.time += interval
+
+    def get_time(self):
+        self.mutex
+        with mutex:
+            return self.time
 
 class BrokerConfigs(object):
     def __init__(self, queue='default', host='localhost', routing_key='default', exchange='', credentials=pika.PlainCredentials('guest', 'guest')):
@@ -18,9 +38,12 @@ class BrokerConfigs(object):
 
 
 class ThreadHousehold(object):
-    def __init__(self, stop_event, meter=Meter(), brokerconfigs=BrokerConfigs()):
+    def __init__(self, start_event, stop_event, timer: ThreadTimer=None, meter=Meter(), brokerconfigs=BrokerConfigs()):
+        self.start_event = start_event
         self.stop_event = stop_event
         self.meter = meter
+
+        self.timer = timer
 
         self.config = brokerconfigs
         self.connection = pika.BlockingConnection(pika.ConnectionParameters(host=self.config.host, credentials=self.config.credentials))
@@ -32,31 +55,52 @@ class ThreadHousehold(object):
 
     def _publish(self, message=''):
         self.channel.basic_publish(exchange=self.config.exchange, routing_key=self.config.routing_key, body=message)
-        print('message published')
 
     def _run(self):
         global mutex
+
+        while not self.start_event.is_set():
+            time.sleep(0.01)
+
         print('H Started')
+
+        t_last = 0
+
         while not self.stop_event.is_set():
+            if self.timer is not None:
+                t = self.timer.get_time()
+            else:
+                t = int(time.time())
             with mutex:
-                t = 23.00
-                m = MeterMessage(origin=self.meter.id, time=t, consumption=self.meter.get_consumption(t))
-                self._publish(message=str(m.to_json()))
-            time.sleep(1)
+                # Only send message if 2 seconds has passed
+                if t_last + 2 <= t:
+                    m = MeterMessage(origin=self.meter.id, time=t, consumption=self.meter.get_consumption(t))
+                    self._publish(message=str(m.to_json()))
+                    t_last = t
+            if self.timer is not None:
+                self.timer.increment_time(2)
+
+            time.sleep(0.1)
+
         print('H Finished')
+
         self.connection.close()
 
 
 class ThreadPvGenerator(object):
 
-    def __init__(self, stop_event, photovoltaic=Photovoltaic(), brokerconfigs=BrokerConfigs(), logfile=None):
+    def __init__(self, start_event, stop_event, photovoltaic=Photovoltaic(), brokerconfigs=BrokerConfigs(), logfile=None):
+        self.start_event = start_event
+        self.stop_event = stop_event
+
         if logfile is not None:
             self.logfile = open(logfile, 'w')
+
+            self.logfile.write(f"{'Time':>12} [s] | {'Meter Name':^10}{'Consumption':^17} [W] |{'PV Name':^10}{'Generation':^20} [kW] |{'Netto':^20} [kW]\n")
         else:
             self.logfile = None
 
         self.photovoltaic = photovoltaic
-        self.stop_event = stop_event
 
         self.config = brokerconfigs
         self.connection = pika.BlockingConnection(pika.ConnectionParameters(host=self.config.host, credentials=self.config.credentials))
@@ -69,7 +113,12 @@ class ThreadPvGenerator(object):
 
     def _run(self):
         global mutex
+
+        while not self.start_event.is_set():
+            time.sleep(0.01)
+
         print("PV Start")
+
         self.channel.basic_consume(queue=self.config.queue, on_message_callback=self._on_request, auto_ack=True)
         while not self.stop_event.is_set():
             with mutex:
@@ -86,9 +135,9 @@ class ThreadPvGenerator(object):
 
     def logger(self, message: MeterMessage = ''):
         generation = self.photovoltaic.get_power(message.time)
-        str = "{:10} - Meter {:10} consumed {:10} [W] | PV {:10} generated {:10} [W] | Consumption Netto: {}\n"\
-            .format(message.time, message.origin, message.consumption, self.photovoltaic.id,\
-            generation, generation - message.consumption)
+        str = "{:>12} [s] | {:^10} consumed {:<07} [W] | {:^10} generated {:<08} [kW] | Netto: {:<012} [kW]\n"\
+            .format(message.time, message.origin, np.round(message.consumption, 2), self.photovoltaic.id,\
+                np.round(generation/1000.0, 6), np.round((generation - message.consumption)/1000, 6))
         if self.logfile is not None:
             self.logfile.write(str)
             return
