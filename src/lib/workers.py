@@ -6,7 +6,6 @@ from src.lib.metermessage import MeterMessage
 import threading
 import time
 
-mutex = threading.Lock()
 
 class ThreadTimer(object):
     def __init__(self, init_time=0, duration=3600):
@@ -25,8 +24,9 @@ class ThreadTimer(object):
 
     def get_time(self):
         self.mutex
-        with mutex:
+        with self.mutex:
             return self.time
+
 
 class BrokerConfigs(object):
     def __init__(self, queue='default', host='localhost', routing_key='default', exchange='', credentials=pika.PlainCredentials('guest', 'guest')):
@@ -57,12 +57,10 @@ class ThreadHousehold(object):
         self.channel.basic_publish(exchange=self.config.exchange, routing_key=self.config.routing_key, body=message)
 
     def _run(self):
-        global mutex
-
         while not self.start_event.is_set():
             time.sleep(0.01)
 
-        print('H Started')
+        print('Household thread Started')
 
         t_last = 0
 
@@ -71,18 +69,17 @@ class ThreadHousehold(object):
                 t = self.timer.get_time()
             else:
                 t = int(time.time())
-            with mutex:
                 # Only send message if 2 seconds has passed
-                if t_last + 2 <= t:
-                    m = MeterMessage(origin=self.meter.id, time=t, consumption=self.meter.get_consumption(t))
-                    self._publish(message=str(m.to_json()))
-                    t_last = t
+            if t_last + 2 <= t:
+                m = MeterMessage(origin=self.meter.id, time=t, consumption=self.meter.get_consumption(t))
+                self._publish(message=str(m.to_json()))
+                t_last = t
             if self.timer is not None:
                 self.timer.increment_time(2)
 
-            time.sleep(0.1)
+            time.sleep(0.01)
 
-        print('H Finished')
+        print('Household thread Finished')
 
         self.connection.close()
 
@@ -112,21 +109,17 @@ class ThreadPvGenerator(object):
         thread.start()
 
     def _run(self):
-        global mutex
-
         while not self.start_event.is_set():
             time.sleep(0.01)
 
-        print("PV Start")
+        print("PV Thread Start")
 
         self.channel.basic_consume(queue=self.config.queue, on_message_callback=self._on_request, auto_ack=True)
         while not self.stop_event.is_set():
-            with mutex:
-                self.connection.process_data_events()
-                # print(self.queue)
+            self.connection.process_data_events()
             time.sleep(0.1)
         self.connection.close()
-        print("PV finished")
+        print("PV thread finished")
 
     def _on_request(self, ch, method, properties, body):
         # self.queue[properties.correlation_id] = body
