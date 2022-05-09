@@ -20,12 +20,12 @@ class Program():
     def __init__(self):
         while True:
             if self.mode is None:
-                tmp = input("Please select Mode\n\t[S]imulation | [R]eal Time")
+                tmp = input("Please select Mode\n\t[S]imulation | [R]eal Time: ")
                 self.mode = tmp[0].upper() if tmp[0] in ['S', 's', 'R', 'r'] else None
             if self.mode == 'R':
                 self.init_time = int(time.time())
             if self.init_time is None:
-                tmp = str(input("Please select initial Time of simulation (HH:MM:SS)"))
+                tmp = str(input("Please select initial Time of simulation (HH:MM:SS): "))
                 try:
                     tmp = datetime.strptime(tmp, "%H:%M:%S")
                     self.init_time = int((tmp - datetime(1900,1,1)).total_seconds())
@@ -34,22 +34,22 @@ class Program():
                     break
                     continue
             if self.duration is None:
-                tmp = input("Please especify duration in seconds")
+                tmp = input("Please especify duration in seconds: ")
                 try:
                     self.duration = int(tmp)
                 except Exception:
                     print("Not a Number")
 
             if self.house_name is None:
-                tmp = input("Select House Name (default: House)")
+                tmp = input("Select House Name (default: House): ")
                 self.house_name = "House" if tmp == '' else tmp
 
             if self.pv_name is None:
-                tmp = input("Select photovoltaic generator Name (default: PV)")
+                tmp = input("Select photovoltaic generator Name (default: PV): ")
                 self.pv_name = "PV" if tmp == '' else tmp
 
             if self.log_file is None:
-                tmp = input("Select photovoltaic generator Name (default: logfile.log)")
+                tmp = input("Select photovoltaic generator Name (default: console output): ")
                 self.log_file = None if tmp == '' else tmp
 
             if self.mode is not None and self.duration is not None\
