@@ -78,7 +78,8 @@ class Program():
 
         workers.ThreadHousehold(start_event=start_event, stop_event=household_event,\
                             meter=meter, brokerconfigs=broker_config, timer=timer)
-        workers.ThreadPvGenerator(start_event=start_event, stop_event=photovoltaic_event, photovoltaic=photovoltaic, brokerconfigs=broker_config, logfile=self.log_file)
+        workers.ThreadPvGenerator(start_event=start_event, stop_event=photovoltaic_event,\
+                            photovoltaic=photovoltaic, brokerconfigs=broker_config, logfile=self.log_file)
 
         # little pause to let the threads prepare
         time.sleep(0.5)
