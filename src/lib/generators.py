@@ -5,6 +5,7 @@ import src.lib.configurations as configs
 
 
 class Meter:
+    # Object Modeling the electrical meter of a House
     p_noise = PerlinNoise(octaves=0.0001, seed=configs.SEED)
     random_seed = random.Random(configs.SEED)
 
@@ -18,14 +19,15 @@ class Meter:
         # Using PerlinNoise in order to create a smooth Curve
         # PerlinNoise is generated between -1 and 1, so we escale it to be between our values
         next = (self.p_noise(time) + 1) * ((configs.METER_MAX_CONSUMPTION - configs.METER_MIN_CONSUMPTION)/2) + noise
-        if next <= 0.0:
-            return 0.0
-        if next >= 9000.0:
-            return 9000.0
+        if next <= configs.METER_MIN_CONSUMPTION:
+            return configs.METER_MIN_CONSUMPTION
+        if next >= configs.METER_MAX_CONSUMPTION:
+            return configs.METER_MAX_CONSUMPTION
         return next
 
 
 class Photovoltaic:
+    # Object Modeling the photovoltaic generator
     random_seed = random.Random(configs.SEED)
 
     def __init__(self, id='', seed=configs.SEED):
@@ -40,6 +42,7 @@ class Photovoltaic:
         if t <= configs.PV_DAWN or t >= configs.PV_DUSK:
             return configs.PV_VOLTS_NO_SUN
 
+        # generate perturvation for added variability
         noise = configs.NOISE_AMPLITUDE*self.random_seed.randrange(-1, 2)
         # after dawn for DAWN_TIME hours after dawn we see a linear component
         if t <= (configs.PV_DAWN + configs.PV_DAWN_TIME):
@@ -47,12 +50,14 @@ class Photovoltaic:
             tmp = configs.PV_DAWN_CONST[0] * t + configs.PV_DAWN_CONST[1] + noise
             return tmp if tmp > 0 else 0.0
 
-        # # before dusk, for DUSK_TIMEhours we see a linear component
+        # before dusk, for DUSK_TIMEhours we see a linear component
         if t >= (configs.PV_DUSK - configs.PV_DUSK_TIME):
+            #  Y = mX + a
             tmp = configs.PV_DUSK_CONST[0] * t + configs.PV_DUSK_CONST[1] + noise
             return tmp if tmp > 0 else 0.0
 
         # in between we see a cuadratic component
+        #  Y = a*X**2 + bX + c
         return configs.PV_DAY_CONST[0] * t**2 + configs.PV_DAY_CONST[1] * t + configs.PV_DAY_CONST[2] + noise
 
 
