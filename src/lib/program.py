@@ -102,5 +102,6 @@ class Program():
         time.sleep(2)
         photovoltaic_event.set()
 
-
-        print("Program Finished, please look logfile.log for output")
+        print("Program Finished", end='')
+        if self.log_file is not None:
+            print(", please look logfile.log for output")

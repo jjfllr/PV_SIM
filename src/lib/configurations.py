@@ -1,20 +1,21 @@
+# File containing different configuration parameters for models.
+
 import numpy as np
 
+
 ################################################
-# Parameters
+# Randomizer Parameters
 NOISE_AMPLITUDE = 1
 SEED = 39
 
+# Parameters for modeling
 # values in Watt
 METER_MIN_CONSUMPTION = 0.0
 METER_MAX_CONSUMPTION = 9000.0
-
 PV_VOLTS_NO_SUN = 0.0
 PV_VOLTS_FULL_RISE = 300.0
 PV_VOLTS_BEGIN_FALL = 200.0
 PV_VOLTS_MAX = 3300.0
-
-
 # Times in secods
 PV_DAWN = 5.5 * 60 * 60
 PV_DUSK = 21.0 * 60 * 60
@@ -23,7 +24,7 @@ PV_DUSK_TIME = 1.0 * 60 * 60
 PV_HOUR_MAX_VOLT = 14.0 * 60 * 60
 
 ################################################
-# PV equations
+# Modeling Equations
 # Dawn curve calculation
 PV_DAWN_CONST = np.polyfit(
         x=[PV_DAWN, PV_DAWN+PV_DAWN_TIME],

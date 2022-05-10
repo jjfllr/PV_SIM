@@ -8,6 +8,7 @@ import time
 
 
 class ThreadTimer(object):
+    # Timer for simulation. Uses a Mutex as it should be shared if simulating multiple households
     def __init__(self, init_time=0, duration=3600):
         self.mutex = threading.Lock()
         self.duration = duration
@@ -29,6 +30,7 @@ class ThreadTimer(object):
 
 
 class BrokerConfigs(object):
+    # Configurations for RabbitMQ Channel
     def __init__(self, queue='default', host='localhost', routing_key='default', exchange='', credentials=pika.PlainCredentials('guest', 'guest')):
         self.credentials = credentials
         self.queue = str(queue)
@@ -38,6 +40,7 @@ class BrokerConfigs(object):
 
 
 class ThreadHousehold(object):
+    # Thread simulating Household, Starts when start_event is set, stops when stop_event is set
     def __init__(self, start_event, stop_event, timer: ThreadTimer=None, meter=Meter(), brokerconfigs=BrokerConfigs()):
         self.start_event = start_event
         self.stop_event = stop_event
@@ -85,7 +88,7 @@ class ThreadHousehold(object):
 
 
 class ThreadPvGenerator(object):
-
+    # Thread simulating Generator, Starts when start_event is set, stops when stop_event is set
     def __init__(self, start_event, stop_event, photovoltaic=Photovoltaic(), brokerconfigs=BrokerConfigs(), logfile=None):
         self.start_event = start_event
         self.stop_event = stop_event

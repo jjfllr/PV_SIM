@@ -2,6 +2,9 @@ import numpy as np
 import json
 
 class MeterMessage():
+    # Object to manage message format between house and generator threads
+    # Can parse data into json for transmission and an object can be generated
+    # from correctly formated json data
     origin: str
     time: np.float64
     consumption: np.float64

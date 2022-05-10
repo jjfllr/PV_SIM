@@ -3,6 +3,7 @@ import datetime
 
 from src.lib.program import Program
 
+
 def main():
     print("--- PV Simulator ---")
     p = Program()
