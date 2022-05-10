@@ -22,8 +22,13 @@ required to make the connection to the RabbitMQ server, ideally running in local
 
 RUNNING THE PROGRAM
 
+  Please be shure that a RabbitMQ server is running in the host machine or modify configurations.py
+  accordingly. The default credentials for RabbitMQ are hardcoded and are set by the pika.PlainCredentials()
+  method. They can be changed in the configurations.py file.
+
   To run the program simply run the main.py script, an interactive menu will ask for
-  the simulation parameters.
+  the simulation parameters. The execution path should be in the $PYTHON_PATH variable
+  and the folder structure be maintained.
 
   At first the program will ask if the user wants to simulate or run in real time.
   the mode is choose by the Highlighted letter (S or s for simulated, R or r for
